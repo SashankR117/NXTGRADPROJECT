@@ -11,7 +11,7 @@ import { pipelineRouter } from './routes/pipeline.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load .env file
+// Load .env file (without overwriting existing system/Render environment variables)
 function loadEnv() {
   const envPaths = [
     path.join(__dirname, '..', '..', '.env'),
@@ -24,9 +24,11 @@ function loadEnv() {
         const trimmed = line.trim();
         if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
           const [key, ...valueParts] = trimmed.split('=');
-          const value = valueParts.join('=').trim();
-          if (key && key.trim()) {
-            process.env[key.trim()] = value;
+          const k = key ? key.trim() : '';
+          const v = valueParts.join('=').trim();
+          // Only set if value is non-empty and process.env does not already have a valid value
+          if (k && v && (!process.env[k] || process.env[k]?.trim() === '')) {
+            process.env[k] = v;
           }
         }
       }

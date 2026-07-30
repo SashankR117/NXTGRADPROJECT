@@ -159,8 +159,8 @@ ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.coun
   const cleanKey = apiKey.replace(/^bearer\s+/i, '').trim();
   const isBearerToken = cleanKey.startsWith('AQ.') || cleanKey.startsWith('ya29.');
 
-  // Models to try in order of priority
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
+  // Models to try in order: newest/fastest first
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
   let lastError: any = null;
 
   for (const model of models) {

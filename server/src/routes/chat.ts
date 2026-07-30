@@ -114,23 +114,23 @@ function hasClaudeKey(key: string | undefined): boolean {
 }
 
 async function generateResponse(query: string, context: RetrievedContext): Promise<{ content: string; citations: any[] }> {
-  // 1. Try Groq API if key is set (Primary - Blazing Fast Llama 3.3 70B)
-  const groqApiKey = process.env.GROQ_API_KEY?.trim();
-  if (hasGroqKey(groqApiKey)) {
-    try {
-      return await generateGroqResponse(query, context, groqApiKey!);
-    } catch (e: any) {
-      console.warn('⚠️ Groq API call failed, trying backup AI provider:', e.message || e);
-    }
-  }
-
-  // 2. Try Gemini API if key is set
+  // 1. Try Gemini API if key is set (Primary)
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
   if (hasGeminiKey(geminiApiKey)) {
     try {
       return await generateGeminiResponse(query, context, geminiApiKey!);
     } catch (e: any) {
       console.warn('⚠️ Gemini API call failed, trying backup AI provider:', e.message || e);
+    }
+  }
+
+  // 2. Try Groq API if key is set (Backup)
+  const groqApiKey = process.env.GROQ_API_KEY?.trim();
+  if (hasGroqKey(groqApiKey)) {
+    try {
+      return await generateGroqResponse(query, context, groqApiKey!);
+    } catch (e: any) {
+      console.warn('⚠️ Groq API call failed, trying backup AI provider:', e.message || e);
     }
   }
 

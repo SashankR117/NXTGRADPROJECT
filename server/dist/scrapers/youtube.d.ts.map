@@ -1,1 +1,0 @@
-{"version":3,"file":"youtube.d.ts","sourceRoot":"","sources":["../../src/scrapers/youtube.ts"],"names":[],"mappings":"AASA,wBAAgB,qBAAqB,CAAC,KAAK,EAAE,MAAM,GAAG,MAAM,CAY3D;AAyBD,wBAAsB,qBAAqB,CAAC,UAAU,GAAE,MAAsB,GAAG,OAAO,CAAC;IAAE,OAAO,EAAE,MAAM,CAAC;IAAC,SAAS,EAAE,MAAM,CAAC;IAAC,MAAM,EAAE,MAAM,CAAC;IAAC,GAAG,EAAE,MAAM,CAAA;CAAE,CAAC,CAwH5J"}

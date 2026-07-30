@@ -3,7 +3,8 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDb } from './db/index.js';
+import { initDb, queryOne } from './db/index.js';
+import { seed } from './db/seed.js';
 import { dashboardRouter } from './routes/dashboard.js';
 import { chatRouter } from './routes/chat.js';
 import { pipelineRouter } from './routes/pipeline.js';
@@ -66,10 +67,17 @@ async function start() {
   await initDb();
   console.log('📦 Database initialized');
 
+  const docCount = queryOne('SELECT COUNT(*) as count FROM documents')?.count || 0;
+  if (docCount === 0) {
+    console.log('🌱 Database is empty, auto-seeding sample dataset...');
+    await seed();
+  }
+
   app.listen(PORT, () => {
     console.log(`🚀 Discovery Engine API running on http://localhost:${PORT}`);
   });
 }
 
 start().catch(console.error);
+
 

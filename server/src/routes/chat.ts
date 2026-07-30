@@ -38,20 +38,22 @@ chatRouter.get('/history', (req, res) => {
 });
 
 chatRouter.get('/suggestions', (_req, res) => {
-  res.json({ suggestions: [
-    "Why do users keep buying from the same grocery categories?",
-    "What prevents users from exploring new product categories?",
-    "How do users discover new products today?",
-    "What role do habits play in shopping behavior?",
-    "What information do users need before trying a new category?",
-    "What are the top frustrations mentioned across all platforms?",
-    "Which user segments are most likely to experiment with new products?",
-    "What unmet needs keep appearing in user feedback?",
-    "Compare sentiment across App Store vs Play Store reviews",
-    "What do power users say about product discovery?",
-    "Summarize the key themes from Reddit discussions",
-    "What specific recommendations can improve category exploration?",
-  ]});
+  res.json({
+    suggestions: [
+      "Why do users keep buying from the same grocery categories?",
+      "What prevents users from exploring new product categories?",
+      "How do users discover new products today?",
+      "What role do habits play in shopping behavior?",
+      "What information do users need before trying a new category?",
+      "What are the top frustrations mentioned across all platforms?",
+      "Which user segments are most likely to experiment with new products?",
+      "What unmet needs keep appearing in user feedback?",
+      "Compare sentiment across App Store vs Play Store reviews",
+      "What do power users say about product discovery?",
+      "Summarize the key themes from Reddit discussions",
+      "What specific recommendations can improve category exploration?",
+    ]
+  });
 });
 
 interface RetrievedContext {
@@ -157,7 +159,7 @@ ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.coun
       if (response.ok) {
         const data = await response.json() as any;
         const content = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response text returned.';
-        
+
         const citations: any[] = [];
         const regex = /\[Source:\s*([^\]]+)\]/g;
         let match;
@@ -211,7 +213,7 @@ ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.coun
   if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
   const data = await response.json() as any;
   const content = data.content?.[0]?.text || 'Unable to generate response.';
-  
+
   const citations: any[] = [];
   const regex = /\[Source:\s*([^\]]+)\]/g;
   let match;

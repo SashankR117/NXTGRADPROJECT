@@ -369,5 +369,7 @@ export async function seed() {
   console.log('🎉 Database seeded successfully!');
 }
 
-// Run
-seed().catch(console.error);
+// Run if executed directly
+if (process.argv[1] && (process.argv[1].endsWith('seed.ts') || process.argv[1].endsWith('seed.js'))) {
+  seed().catch(console.error);
+}

@@ -89,6 +89,14 @@ function retrieveContext(query: string): RetrievedContext {
   };
 }
 
+function hasGroqKey(key: string | undefined): boolean {
+  if (!key) return false;
+  const k = key.trim();
+  if (k.length < 10) return false;
+  if (k.includes('YOUR_') || k.includes('PLACEHOLDER')) return false;
+  return true;
+}
+
 function hasGeminiKey(key: string | undefined): boolean {
   if (!key) return false;
   const k = key.trim();
@@ -106,35 +114,96 @@ function hasClaudeKey(key: string | undefined): boolean {
 }
 
 async function generateResponse(query: string, context: RetrievedContext): Promise<{ content: string; citations: any[] }> {
-  // 1. Try Gemini API if key is set
+  // 1. Try Groq API if key is set (Primary - Blazing Fast Llama 3.3 70B)
+  const groqApiKey = process.env.GROQ_API_KEY?.trim();
+  if (hasGroqKey(groqApiKey)) {
+    try {
+      return await generateGroqResponse(query, context, groqApiKey!);
+    } catch (e: any) {
+      console.warn('⚠️ Groq API call failed, trying backup AI provider:', e.message || e);
+    }
+  }
+
+  // 2. Try Gemini API if key is set
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
   if (hasGeminiKey(geminiApiKey)) {
     try {
       return await generateGeminiResponse(query, context, geminiApiKey!);
     } catch (e: any) {
-      console.warn('⚠️ Gemini API call failed (key blocked/quota), seamlessly trying backup AI model:', e.message || e);
+      console.warn('⚠️ Gemini API call failed, trying backup AI provider:', e.message || e);
     }
   }
 
-  // 2. Try Claude API if key is set
+  // 3. Try Claude API if key is set
   const claudeApiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (hasClaudeKey(claudeApiKey)) {
     try {
       return await generateClaudeResponse(query, context, claudeApiKey!);
     } catch (e: any) {
-      console.warn('⚠️ Claude API call failed, trying backup AI model:', e.message || e);
+      console.warn('⚠️ Claude API call failed, trying backup AI provider:', e.message || e);
     }
   }
 
-  // 3. Try Universal Open AI Model (High-Speed Free LLM, no key required)
+  // 4. Try Universal Open AI Model
   try {
     return await generatePollinationsResponse(query, context);
   } catch (e: any) {
     console.warn('⚠️ Universal AI call failed, falling back to Smart RAG Engine:', e.message || e);
   }
 
-  // 4. Fallback to Smart RAG Engine
+  // 5. Fallback to Smart RAG Engine
   return generateLocalResponse(query, context);
+}
+
+async function generateGroqResponse(query: string, context: RetrievedContext, apiKey: string): Promise<{ content: string; citations: any[] }> {
+  const systemPrompt = buildSystemPrompt(context);
+  const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+  let lastError: any = null;
+
+  for (const model of models) {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: query }
+          ],
+          max_tokens: 2048,
+          temperature: 0.3
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json() as any;
+        const content = data.choices?.[0]?.message?.content || '';
+        if (!content || content.trim().length === 0) continue;
+
+        const citations: any[] = [];
+        const regex = /\[Source:\s*([^\]]+)\]/g;
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+          const sourceText = match[1];
+          const sourcePlat = sourceText.split(',')[0].trim().toLowerCase();
+          const matchingDoc = context.documents.find(d => d.source.toLowerCase() === sourcePlat);
+          citations.push({ text: sourceText, source: sourcePlat, documentId: matchingDoc?.id });
+        }
+        return { content, citations };
+      } else {
+        const errText = await response.text();
+        lastError = new Error(`Groq HTTP ${response.status} (${model}): ${errText}`);
+      }
+    } catch (err: any) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Failed to query Groq API');
 }
 
 function buildSystemPrompt(context: RetrievedContext): string {

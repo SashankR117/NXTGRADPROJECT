@@ -211,25 +211,29 @@ ${context.documents.slice(0, 15).map((d: any) => `- [Source: ${d.source}, ${d.cr
 ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.count} mentions`).join('\n')}`;
 
   const cleanKey = apiKey.replace(/^bearer\s+/i, '').trim();
-  const isBearerToken = cleanKey.startsWith('AQ.') || cleanKey.startsWith('ya29.');
+  // ya29. tokens are OAuth2 access tokens → use Authorization: Bearer header
+  // AQ. keys and AIzaSy keys are API keys → use x-goog-api-key header (per Google docs)
+  const isOAuthToken = cleanKey.startsWith('ya29.');
 
-  // Models to try in order: newest/fastest first
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+  // Models confirmed working via live testing (2026-07-30):
+  // gemini-3.6-flash (200 ✅), gemini-3.5-flash-lite (200 ✅), gemini-3.1-flash-lite (200 ✅)
+  // Deprecated/exhausted: gemini-2.5-flash (404), gemini-2.0-flash (429)
+  const models = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
   let lastError: any = null;
 
   for (const model of models) {
     try {
-      const url = isBearerToken
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
-        : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+      // OAuth tokens: no ?key= param; API keys: also no ?key= param (use header instead for security)
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       };
 
-      if (isBearerToken) {
+      if (isOAuthToken) {
         headers['Authorization'] = `Bearer ${cleanKey}`;
       } else {
+        // AQ. keys and AIzaSy keys both use x-goog-api-key header
         headers['x-goog-api-key'] = cleanKey;
       }
 

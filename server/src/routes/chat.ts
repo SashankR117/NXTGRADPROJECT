@@ -106,33 +106,87 @@ function hasClaudeKey(key: string | undefined): boolean {
 }
 
 async function generateResponse(query: string, context: RetrievedContext): Promise<{ content: string; citations: any[] }> {
+  // 1. Try Gemini API if key is set
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
   if (hasGeminiKey(geminiApiKey)) {
     try {
       return await generateGeminiResponse(query, context, geminiApiKey!);
     } catch (e: any) {
-      console.error('Gemini API call failed:', e);
-      return {
-        content: `⚠️ **Gemini API Error**: ${e.message || 'Failed to call Gemini API'}\n\nPlease check your \`GEMINI_API_KEY\` credentials in your \`.env\` file or environment variables.`,
-        citations: []
-      };
+      console.warn('⚠️ Gemini API call failed (key blocked/quota), seamlessly trying backup AI model:', e.message || e);
     }
   }
 
+  // 2. Try Claude API if key is set
   const claudeApiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (hasClaudeKey(claudeApiKey)) {
     try {
       return await generateClaudeResponse(query, context, claudeApiKey!);
     } catch (e: any) {
-      console.error('Claude API call failed:', e);
-      return {
-        content: `⚠️ **Claude API Error**: ${e.message || 'Failed to call Claude API'}`,
-        citations: []
-      };
+      console.warn('⚠️ Claude API call failed, trying backup AI model:', e.message || e);
     }
   }
 
+  // 3. Try Universal Open AI Model (High-Speed Free LLM, no key required)
+  try {
+    return await generatePollinationsResponse(query, context);
+  } catch (e: any) {
+    console.warn('⚠️ Universal AI call failed, falling back to Smart RAG Engine:', e.message || e);
+  }
+
+  // 4. Fallback to Smart RAG Engine
   return generateLocalResponse(query, context);
+}
+
+async function generatePollinationsResponse(query: string, context: RetrievedContext): Promise<{ content: string; citations: any[] }> {
+  const systemPrompt = `You are the Discovery Engine AI — an expert analyst of user feedback across app stores, social media, forums, and review platforms. You have access to ${context.documentsCount} analyzed feedback documents.
+
+When answering:
+1. Be direct, comprehensive, and helpful. If the user says "hi" or greets you, greet them warmly and explain what insights you can analyze for them.
+2. For analytical questions, ground your points in evidence from the retrieved context below.
+3. Cite sources inline using [Source: platform, date] format where relevant.
+4. Provide structured, clear markdown with bullet points and bold section headers.
+
+## Context - Themes:
+${context.themes.map((t: any) => `- **${t.name}** (${t.document_count} docs, avg sentiment: ${(t.avg_sentiment || 0).toFixed(2)}): ${t.description}`).join('\n')}
+
+## Context - Strategic Insights:
+${context.insights.map((i: any) => `- [${i.theme_name}] ${i.insight_text} (Confidence: ${(i.confidence * 100).toFixed(0)}%)`).join('\n')}
+
+## Context - Relevant Feedback Quotes:
+${context.documents.slice(0, 15).map((d: any) => `- [Source: ${d.source}, ${d.created_at?.split('T')[0]}] "${d.content.slice(0, 200)}"`).join('\n')}
+
+## Context - Top Mentions/Aspects:
+${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.count} mentions`).join('\n')}`;
+
+  const response = await fetch('https://text.pollinations.ai/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'openai',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query }
+      ],
+      max_tokens: 2048,
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Universal AI returned HTTP ${response.status}`);
+
+  const data = await response.json() as any;
+  const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
+  if (!content || content.trim().length === 0) throw new Error('Universal AI returned empty response');
+
+  const citations: any[] = [];
+  const regex = /\[Source:\s*([^\]]+)\]/g;
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    const sourceText = match[1];
+    const sourcePlat = sourceText.split(',')[0].trim().toLowerCase();
+    const matchingDoc = context.documents.find(d => d.source.toLowerCase() === sourcePlat);
+    citations.push({ text: sourceText, source: sourcePlat, documentId: matchingDoc?.id });
+  }
+  return { content, citations };
 }
 
 async function generateGeminiResponse(query: string, context: RetrievedContext, apiKey: string): Promise<{ content: string; citations: any[] }> {
@@ -262,6 +316,26 @@ ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.coun
 
 function generateLocalResponse(query: string, context: RetrievedContext): { content: string; citations: any[] } {
   const q = query.toLowerCase();
+
+  const greetings = ['hello', 'hi', 'hey', 'greetings', 'who are you', 'what can you do', 'good morning', 'good evening'];
+  const cleanQ = q.trim().replace(/[^\w\s]/g, '');
+  if (greetings.includes(cleanQ) || greetings.some(g => cleanQ === g || cleanQ.startsWith(g + ' '))) {
+    return {
+      content: `👋 **Hello! Welcome to the Discovery Engine AI.**
+
+I am your specialized User Feedback Intelligence Assistant. I have access to **${context.documentsCount} analyzed feedback documents** across **${context.themes.length} strategic themes** (including *Habitual Reordering*, *Category Discovery Friction*, *Pricing & Surcharges*, and *Product Discovery Channels*).
+
+Here are a few questions you can ask me:
+- **"Why do users keep buying from the same grocery categories?"**
+- **"What prevents users from exploring new product categories?"**
+- **"What are the top user frustrations across app reviews?"**
+- **"Summarize strategic recommendations for product discovery."**
+
+How can I assist your product analysis today?`,
+      citations: []
+    };
+  }
+
   const questionMap = [
     { keywords: ['same categories', 'repeatedly buy', 'repeat', 'reorder', 'habit', 'same items'], idx: 0 },
     { keywords: ['prevent', 'exploring', 'new categories', 'friction', 'barrier', 'blocks'], idx: 1 },

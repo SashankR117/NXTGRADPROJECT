@@ -25,7 +25,7 @@ function loadEnv() {
         if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
           const [key, ...valueParts] = trimmed.split('=');
           const value = valueParts.join('=').trim();
-          if (key && value) {
+          if (key && key.trim()) {
             process.env[key.trim()] = value;
           }
         }

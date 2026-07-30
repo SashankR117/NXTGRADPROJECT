@@ -89,40 +89,46 @@ function retrieveContext(query: string): RetrievedContext {
   };
 }
 
-function isValidGeminiKey(key: string | undefined): boolean {
+function hasGeminiKey(key: string | undefined): boolean {
   if (!key) return false;
   const k = key.trim();
-  if (k.length < 10) return false;
-  if (k.startsWith('AQ.')) return false; // OAuth bearer token format, not Gemini API key
-  if (k.startsWith('ya29.')) return false; // Google OAuth access token
-  if (k.includes('YOUR_') || k.includes('PLACEHOLDER') || k.includes('XXX')) return false;
+  if (k.length < 5) return false;
+  if (k.includes('YOUR_') || k.includes('PLACEHOLDER') || k.includes('<') || k.includes('XXX')) return false;
   return true;
 }
 
-function isValidClaudeKey(key: string | undefined): boolean {
+function hasClaudeKey(key: string | undefined): boolean {
   if (!key) return false;
   const k = key.trim();
-  if (k.length < 10) return false;
+  if (k.length < 5) return false;
   if (k.includes('YOUR_') || k.includes('PLACEHOLDER')) return false;
   return true;
 }
 
 async function generateResponse(query: string, context: RetrievedContext): Promise<{ content: string; citations: any[] }> {
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
-  if (isValidGeminiKey(geminiApiKey)) {
+  if (hasGeminiKey(geminiApiKey)) {
     try {
       return await generateGeminiResponse(query, context, geminiApiKey!);
     } catch (e: any) {
-      console.warn('⚠️ Gemini API call failed, falling back to local engine:', e.message || e);
+      console.error('Gemini API call failed:', e);
+      return {
+        content: `⚠️ **Gemini API Error**: ${e.message || 'Failed to call Gemini API'}\n\nPlease check your \`GEMINI_API_KEY\` credentials in your \`.env\` file or environment variables.`,
+        citations: []
+      };
     }
   }
 
   const claudeApiKey = process.env.ANTHROPIC_API_KEY?.trim();
-  if (isValidClaudeKey(claudeApiKey)) {
+  if (hasClaudeKey(claudeApiKey)) {
     try {
       return await generateClaudeResponse(query, context, claudeApiKey!);
     } catch (e: any) {
-      console.warn('⚠️ Claude API call failed, falling back to local engine:', e.message || e);
+      console.error('Claude API call failed:', e);
+      return {
+        content: `⚠️ **Claude API Error**: ${e.message || 'Failed to call Claude API'}`,
+        citations: []
+      };
     }
   }
 
@@ -150,15 +156,32 @@ ${context.documents.slice(0, 15).map((d: any) => `- [Source: ${d.source}, ${d.cr
 ## Context - Top Mentions/Aspects:
 ${context.aspects.map((a: any) => `- ${a.aspect_name} (${a.sentiment}): ${a.count} mentions`).join('\n')}`;
 
+  const cleanKey = apiKey.replace(/^bearer\s+/i, '').trim();
+  const isBearerToken = cleanKey.startsWith('AQ.') || cleanKey.startsWith('ya29.');
+
   // Models to try in order of priority
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-flash-latest'];
   let lastError: any = null;
 
   for (const model of models) {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      const url = isBearerToken
+        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+        : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+
+      if (isBearerToken) {
+        headers['Authorization'] = `Bearer ${cleanKey}`;
+      } else {
+        headers['x-goog-api-key'] = cleanKey;
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: query }] }],
           systemInstruction: { parts: [{ text: systemPrompt }] },

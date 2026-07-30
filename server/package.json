@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "seed": "tsx src/db/seed.ts",
+    "dev": "npx tsx watch src/index.ts",
+    "build": "npx tsc",
+    "seed": "npx tsx src/db/seed.ts",
     "start": "node dist/index.js"
   },
   "dependencies": {

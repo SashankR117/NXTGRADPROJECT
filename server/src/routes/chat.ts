@@ -127,9 +127,10 @@ function buildSystemPrompt(context: RetrievedContext): string {
 
 ## RESPONSE GUIDELINES
 1. **Greetings**: If the user greets you ("hi", "hello"), respond warmly, briefly explain your role as the Discovery Engine AI, and suggest 2-3 sample queries to get started.
-2. **Analytical Inquiries**: Ground all findings directly in evidence from the retrieved context below.
-3. **Citations**: Cite sources inline using [Source: platform, date] format wherever applicable.
-4. **Formatting**: Use structured markdown with clear section headers, bullet points, and quantitative metrics.
+2. **Conciseness & Data Focus**: Be concise, direct, and high-density. Prioritize key data points, quantitative metrics, counts, confidence scores, and core findings over lengthy explanations. Eliminate filler and fluff.
+3. **Analytical Inquiries**: Ground all findings directly in evidence from the retrieved context below.
+4. **Citations**: Cite sources inline using [Source: platform, date] format wherever applicable.
+5. **Formatting**: Use clean markdown with tight bullet points, key metrics highlighted in bold, and structured bullet lists.
 
 ## Context - Themes:
 ${context.themes.map((t: any) => `- **${t.name}** (${t.document_count} docs, avg sentiment: ${(t.avg_sentiment || 0).toFixed(2)}): ${t.description}`).join('\n')}
@@ -173,7 +174,7 @@ async function generateGeminiResponse(query: string, context: RetrievedContext, 
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: query }] }],
           systemInstruction: { parts: [{ text: systemPrompt }] },
-          generationConfig: { maxOutputTokens: 2048 }
+          generationConfig: { maxOutputTokens: 8192 }
         }),
       });
 

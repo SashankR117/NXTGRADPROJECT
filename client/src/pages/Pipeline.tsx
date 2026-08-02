@@ -4,12 +4,12 @@ import { Activity, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SOURCE_LABELS: Record<string, string> = {
-  appstore: 'App Store', playstore: 'Play Store', reddit: 'Reddit',
+  appstore: 'App Store', playstore: 'Play Store', reddit: 'Reddit', youtube: 'YouTube',
   forum: 'Forums', twitter: 'Twitter/X', reviews: 'Reviews', quickcommerce: 'Quick Commerce',
 };
 
 const SOURCE_COLORS: Record<string, string> = {
-  appstore: '#60a5fa', playstore: '#4ade80', reddit: '#fb923c',
+  appstore: '#60a5fa', playstore: '#4ade80', reddit: '#fb923c', youtube: '#ef4444',
   forum: '#c084fc', twitter: '#38bdf8', reviews: '#fbbf24', quickcommerce: '#fb7185',
 };
 

@@ -14,6 +14,7 @@ const SOURCE_COLORS: Record<string, string> = {
   appstore: '#60a5fa',
   playstore: '#4ade80',
   reddit: '#fb923c',
+  youtube: '#ef4444',
   forum: '#c084fc',
   twitter: '#38bdf8',
   reviews: '#fbbf24',
@@ -24,6 +25,7 @@ const SOURCE_LABELS: Record<string, string> = {
   appstore: 'App Store',
   playstore: 'Play Store',
   reddit: 'Reddit',
+  youtube: 'YouTube',
   forum: 'Forums',
   twitter: 'Twitter/X',
   reviews: 'Reviews',
@@ -85,7 +87,7 @@ export default function Overview() {
         <KPICard
           icon={<Radio size={20} />}
           label="Sources Active"
-          value={`${data.kpis.sourcesActive}/7`}
+          value={`${data.kpis.sourcesActive}/8`}
           change="All online"
           positive
           color="var(--accent-cyan)"

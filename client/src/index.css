@@ -465,6 +465,7 @@ a:hover { color: var(--accent-indigo); }
 .source-badge.appstore { border-color: rgba(59, 130, 246, 0.3); color: #60a5fa; }
 .source-badge.playstore { border-color: rgba(34, 197, 94, 0.3); color: #4ade80; }
 .source-badge.reddit { border-color: rgba(249, 115, 22, 0.3); color: #fb923c; }
+.source-badge.youtube { border-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
 .source-badge.forum { border-color: rgba(168, 85, 247, 0.3); color: #c084fc; }
 .source-badge.twitter { border-color: rgba(56, 189, 248, 0.3); color: #38bdf8; }
 .source-badge.reviews { border-color: rgba(251, 191, 36, 0.3); color: #fbbf24; }

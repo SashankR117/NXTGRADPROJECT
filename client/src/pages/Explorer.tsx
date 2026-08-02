@@ -44,6 +44,7 @@ export default function Explorer() {
           <option value="appstore">App Store</option>
           <option value="playstore">Play Store</option>
           <option value="reddit">Reddit</option>
+          <option value="youtube">YouTube</option>
           <option value="forum">Forums</option>
           <option value="twitter">Twitter/X</option>
           <option value="reviews">Reviews</option>

@@ -4,12 +4,12 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 
 const SOURCE_LABELS: Record<string, string> = {
   appstore: 'App Store', playstore: 'Play Store', reddit: 'Reddit',
-  forum: 'Forums', twitter: 'Twitter/X', reviews: 'Reviews', quickcommerce: 'Quick Commerce',
+  forum: 'Forums', twitter: 'Twitter/X', reviews: 'Reviews', quickcommerce: 'Quick Commerce', youtube: 'YouTube',
 };
 
 const SOURCE_COLORS: Record<string, string> = {
   appstore: '#60a5fa', playstore: '#4ade80', reddit: '#fb923c',
-  forum: '#c084fc', twitter: '#38bdf8', reviews: '#fbbf24', quickcommerce: '#fb7185',
+  forum: '#c084fc', twitter: '#38bdf8', reviews: '#fbbf24', quickcommerce: '#fb7185', youtube: '#ef4444',
 };
 
 const SENT_COLORS = { positive: '#10b981', negative: '#f43f5e', neutral: '#f59e0b', mixed: '#8b5cf6' };

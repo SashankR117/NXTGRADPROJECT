@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import gplay from 'google-play-scraper';
 import { execute, saveDb, queryOne } from '../db/index.js';
-import { analyzeSentiment, extractAspects, findThemeId, getFingerprint } from './reddit.js';
+import { analyzeSentiment, extractAspects, findThemeId, findTopicId, getFingerprint } from './reddit.js';
 
 const TARGET_APPS = [
   { name: 'Blinkit', appId: 'com.grofers.customerapp', product: 'Blinkit' },
@@ -51,6 +51,7 @@ export async function scrapePlayStore(numPerApp: number = 20): Promise<{ fetched
         const docId = uuid();
         const sentiment = analyzeSentiment(content);
         const themeId = findThemeId(content);
+        const topicId = findTopicId(content, themeId);
 
         execute(`
           INSERT INTO documents (
@@ -74,7 +75,7 @@ export async function scrapePlayStore(numPerApp: number = 20): Promise<{ fetched
           sentiment.valence,
           sentiment.label,
           0.92,
-          null,
+          topicId,
           themeId,
           r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
           fingerprint
@@ -98,6 +99,9 @@ export async function scrapePlayStore(numPerApp: number = 20): Promise<{ fetched
 
   execute(`
     UPDATE themes SET document_count = (SELECT COUNT(*) FROM documents WHERE documents.theme_id = themes.id)
+  `);
+  execute(`
+    UPDATE topics SET document_count = (SELECT COUNT(*) FROM documents WHERE documents.topic_id = topics.id)
   `);
 
   const logStr = logLines.join('\n');

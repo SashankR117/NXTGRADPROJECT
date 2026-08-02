@@ -106,6 +106,24 @@ export function findThemeId(text: string): number {
   return bestThemeId || Math.floor(Math.random() * 9) + 1;
 }
 
+export function findTopicId(text: string, themeId: number): number {
+  // Topic ID mapping per theme (27 topics total, 3 per theme)
+  const themeTopicRanges: Record<number, number[]> = {
+    1: [1, 2, 3],
+    2: [4, 5, 6],
+    3: [7, 8, 9],
+    4: [10, 11, 12],
+    5: [13, 14, 15],
+    6: [16, 17, 18],
+    7: [19, 20, 21],
+    8: [22, 23, 24],
+    9: [25, 26, 27]
+  };
+
+  const allowedTopics = themeTopicRanges[themeId] || [1, 2, 3];
+  return allowedTopics[Math.floor(Math.random() * allowedTopics.length)];
+}
+
 
 function decodeEntities(encodedString: string): string {
   return encodedString

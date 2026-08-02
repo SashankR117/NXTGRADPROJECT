@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { queryAll, queryOne } from '../db/index.js';
 import { scrapeReddit } from '../scrapers/reddit.js';
 import { scrapeYouTubeComments } from '../scrapers/youtube.js';
+import { scrapePlayStore } from '../scrapers/playstore.js';
+import { scrapeAppStore } from '../scrapers/appstore.js';
+import { scrapeTwitter } from '../scrapers/twitter.js';
 
 export const pipelineRouter = Router();
 
@@ -35,18 +38,35 @@ pipelineRouter.get('/status', (_req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed to fetch pipeline status' }); }
 });
 
-// Trigger pipeline (runs Reddit + Default YouTube video comments by default)
+// Trigger full pipeline across all live sources (Play Store, App Store, Reddit, YouTube, Twitter)
 pipelineRouter.post('/trigger', async (_req, res) => {
   try {
-    const redditResult = await scrapeReddit();
-    const ytResult = await scrapeYouTubeComments('https://www.youtube.com/watch?v=Tev_3DymaOE');
+    const [playResult, appResult, redditResult, ytResult, twResult] = await Promise.all([
+      scrapePlayStore(20).catch(e => ({ fetched: 0, processed: 0, errors: 1, log: `PlayStore Error: ${e.message}` })),
+      scrapeAppStore().catch(e => ({ fetched: 0, processed: 0, errors: 1, log: `AppStore Error: ${e.message}` })),
+      scrapeReddit().catch(e => ({ fetched: 0, processed: 0, errors: 1, log: `Reddit Error: ${e.message}` })),
+      scrapeYouTubeComments('https://www.youtube.com/watch?v=Tev_3DymaOE', 40).catch(e => ({ fetched: 0, processed: 0, errors: 1, log: `YouTube Error: ${e.message}` })),
+      scrapeTwitter().catch(e => ({ fetched: 0, processed: 0, errors: 1, log: `Twitter Error: ${e.message}` }))
+    ]);
+
+    const totalFetched = playResult.fetched + appResult.fetched + redditResult.fetched + ytResult.fetched + twResult.fetched;
+    const totalProcessed = playResult.processed + appResult.processed + redditResult.processed + ytResult.processed + twResult.processed;
+    const totalErrors = playResult.errors + appResult.errors + redditResult.errors + ytResult.errors + twResult.errors;
+
+    const fullLog = [
+      `--- GOOGLE PLAY STORE SCRAPER ---\n${playResult.log}`,
+      `--- APPLE APP STORE SCRAPER ---\n${appResult.log}`,
+      `--- REDDIT SCRAPER ---\n${redditResult.log}`,
+      `--- YOUTUBE SCRAPER ---\n${ytResult.log}`,
+      `--- TWITTER SCRAPER ---\n${twResult.log}`
+    ].join('\n\n');
 
     res.json({
       success: true,
-      fetched: redditResult.fetched + ytResult.fetched,
-      processed: redditResult.processed + ytResult.processed,
-      errors: redditResult.errors + ytResult.errors,
-      log: `${redditResult.log}\n\n--- YOUTUBE SCRAPER (Default Video: Tev_3DymaOE) ---\n${ytResult.log}`
+      fetched: totalFetched,
+      processed: totalProcessed,
+      errors: totalErrors,
+      log: fullLog
     });
   } catch (err: any) {
     console.error('Trigger scraping failed:', err);
@@ -57,8 +77,8 @@ pipelineRouter.post('/trigger', async (_req, res) => {
 // Custom YouTube video scraper trigger
 pipelineRouter.post('/trigger-youtube', async (req, res) => {
   try {
-    const { videoUrl = 'https://www.youtube.com/watch?v=Tev_3DymaOE' } = req.body;
-    const ytResult = await scrapeYouTubeComments(videoUrl);
+    const { videoUrl = 'https://www.youtube.com/watch?v=Tev_3DymaOE', limit = 40 } = req.body;
+    const ytResult = await scrapeYouTubeComments(videoUrl, limit);
     res.json({ success: true, ...ytResult });
   } catch (err: any) {
     console.error('Custom YouTube scraping failed:', err);
@@ -66,4 +86,33 @@ pipelineRouter.post('/trigger-youtube', async (req, res) => {
   }
 });
 
+// Play Store scraper trigger
+pipelineRouter.post('/trigger-playstore', async (req, res) => {
+  try {
+    const { num = 20 } = req.body;
+    const result = await scrapePlayStore(num);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Play Store scraping failed' });
+  }
+});
 
+// App Store scraper trigger
+pipelineRouter.post('/trigger-appstore', async (_req, res) => {
+  try {
+    const result = await scrapeAppStore();
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'App Store scraping failed' });
+  }
+});
+
+// Twitter scraper trigger
+pipelineRouter.post('/trigger-twitter', async (_req, res) => {
+  try {
+    const result = await scrapeTwitter();
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Twitter scraping failed' });
+  }
+});

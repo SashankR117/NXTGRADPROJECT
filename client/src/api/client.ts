@@ -40,6 +40,9 @@ export const api = {
     status: () => fetchJSON('/pipeline/status'),
     trigger: () => fetchJSON('/pipeline/trigger', { method: 'POST' }),
     triggerYouTube: (videoUrl?: string) => fetchJSON('/pipeline/trigger-youtube', { method: 'POST', body: JSON.stringify({ videoUrl }) }),
+    triggerPlayStore: () => fetchJSON('/pipeline/trigger-playstore', { method: 'POST' }),
+    triggerAppStore: () => fetchJSON('/pipeline/trigger-appstore', { method: 'POST' }),
+    triggerTwitter: () => fetchJSON('/pipeline/trigger-twitter', { method: 'POST' }),
   },
 };
 

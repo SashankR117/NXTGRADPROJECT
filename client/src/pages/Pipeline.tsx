@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Activity, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Play, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -17,6 +17,7 @@ export default function Pipeline() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
+  const [activeScraper, setActiveScraper] = useState<string | null>(null);
   const [runResult, setRunResult] = useState<any>(null);
   const [ytUrl, setYtUrl] = useState('https://www.youtube.com/watch?v=Tev_3DymaOE');
   const [ytTriggering, setYtTriggering] = useState(false);
@@ -33,8 +34,9 @@ export default function Pipeline() {
     refreshStatus();
   }, []);
 
-  const handleTrigger = async () => {
+  const handleFullTrigger = async () => {
     setTriggering(true);
+    setActiveScraper('all');
     setRunResult(null);
     try {
       const res = await api.pipeline.trigger();
@@ -45,6 +47,28 @@ export default function Pipeline() {
       alert(`Scraping run failed: ${err.message || err}`);
     } finally {
       setTriggering(false);
+      setActiveScraper(null);
+    }
+  };
+
+  const handleSingleTrigger = async (source: string) => {
+    setActiveScraper(source);
+    setRunResult(null);
+    try {
+      let res: any;
+      if (source === 'playstore') res = await api.pipeline.triggerPlayStore();
+      else if (source === 'appstore') res = await api.pipeline.triggerAppStore();
+      else if (source === 'twitter') res = await api.pipeline.triggerTwitter();
+      else if (source === 'youtube') res = await api.pipeline.triggerYouTube(ytUrl);
+      else res = await api.pipeline.trigger();
+
+      setRunResult(res);
+      const latest = await api.pipeline.status();
+      setData(latest);
+    } catch (err: any) {
+      alert(`Single scraper run failed: ${err.message || err}`);
+    } finally {
+      setActiveScraper(null);
     }
   };
 
@@ -72,14 +96,15 @@ export default function Pipeline() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
         <div>
           <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, color: 'var(--text-secondary)' }}>Ingestion Orchestration</h3>
-          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Trigger dynamic web scrapers and analyze user feedback on demand</span>
+          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Trigger dynamic web scrapers and analyze real live user feedback on demand</span>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-          <button className="btn btn-secondary btn-sm" onClick={refreshStatus} disabled={triggering || ytTriggering}>
-            Refresh Status
+          <button className="btn btn-secondary btn-sm" onClick={refreshStatus} disabled={triggering || !!activeScraper || ytTriggering}>
+            <RefreshCw size={14} style={{ marginRight: 4 }} /> Refresh Status
           </button>
-          <button className="btn btn-primary btn-sm" onClick={handleTrigger} disabled={triggering || ytTriggering}>
-            {triggering ? 'Running Scrapers & AI...' : 'Trigger Full Ingestion (Reddit + Default Video)'}
+          <button className="btn btn-primary btn-sm" onClick={handleFullTrigger} disabled={triggering || !!activeScraper || ytTriggering}>
+            <Play size={14} style={{ marginRight: 4 }} />
+            {triggering ? 'Running All Live Scrapers & AI...' : 'Trigger Full Ingestion (All Scrapers)'}
           </button>
         </div>
       </div>
@@ -92,7 +117,7 @@ export default function Pipeline() {
               <span>▶ YouTube Video Comment Ingester</span>
             </div>
             <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
-              Default video prefilled: <code style={{ color: 'var(--accent-cyan)' }}>https://www.youtube.com/watch?v=Tev_3DymaOE</code>
+              Target video: <code style={{ color: 'var(--accent-cyan)' }}>https://www.youtube.com/watch?v=Tev_3DymaOE</code>
             </span>
           </div>
           <div style={{ display: 'flex', gap: '8px', flex: '1', minWidth: '300px', maxWidth: '580px' }}>
@@ -107,7 +132,7 @@ export default function Pipeline() {
             <button
               className="btn btn-sm"
               onClick={handleYtTrigger}
-              disabled={ytTriggering || triggering}
+              disabled={ytTriggering || triggering || !!activeScraper}
               style={{ background: '#ef4444', color: 'white', border: 'none', whiteSpace: 'nowrap', padding: '6px 16px', fontWeight: 600 }}
             >
               {ytTriggering ? 'Scraping Video...' : 'Scrape Comments'}
@@ -116,10 +141,9 @@ export default function Pipeline() {
         </div>
       </div>
 
-
       {runResult && (
         <div className="card mb-md animate-slide-up" style={{ borderLeft: '3px solid var(--accent-emerald)', padding: '16px' }}>
-          <h4 style={{ fontWeight: 700, fontSize: 'var(--font-sm)', color: 'var(--positive)', marginBottom: 8 }}>✓ Ingestion & AI Analysis Run Complete</h4>
+          <h4 style={{ fontWeight: 700, fontSize: 'var(--font-sm)', color: 'var(--positive)', marginBottom: 8 }}>✓ Ingestion & Live AI Analysis Run Complete</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
             <div>
               <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Fetched</span>
@@ -134,8 +158,8 @@ export default function Pipeline() {
               <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: runResult.errors > 0 ? 'var(--negative)' : 'var(--positive)' }}>{runResult.errors}</div>
             </div>
             <div>
-              <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Scraped Subreddits</span>
-              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600 }}>r/grocery, Blinkit, etc.</div>
+              <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Live Sources</span>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600 }}>Play Store, App Store, Reddit, Twitter, YouTube</div>
             </div>
           </div>
           {runResult.log && (
@@ -198,12 +222,13 @@ export default function Pipeline() {
       )}
 
       {/* Source Status Cards */}
-      <div className="section-title">Source Status</div>
+      <div className="section-title">Source Status & Controls</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-md)' }}>
         {Object.entries(data.sources).map(([source, run]: [string, any]) => {
           const status = run.status === 'completed' ? 'active' : run.errors > 0 ? 'warning' : 'error';
           const StatusIcon = status === 'active' ? CheckCircle : status === 'warning' ? AlertTriangle : XCircle;
           const statusColor = status === 'active' ? 'var(--positive)' : status === 'warning' ? 'var(--neutral)' : 'var(--negative)';
+          const canSingleTrigger = ['playstore', 'appstore', 'twitter', 'youtube'].includes(source);
 
           return (
             <div key={source} className="card" style={{
@@ -219,7 +244,7 @@ export default function Pipeline() {
                 <StatusIcon size={18} style={{ color: statusColor }} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
                 <div>
                   <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Fetched</div>
                   <div style={{ fontSize: 'var(--font-md)', fontWeight: 700 }}>{run.documents_fetched}</div>
@@ -242,8 +267,20 @@ export default function Pipeline() {
                 </div>
               </div>
 
-              <div style={{ marginTop: 'var(--space-md)', fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
-                Last run: {run.completed_at ? new Date(run.completed_at).toLocaleString() : 'N/A'}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-md)', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+                  {run.completed_at ? new Date(run.completed_at).toLocaleTimeString() : 'N/A'}
+                </span>
+                {canSingleTrigger && (
+                  <button
+                    className="btn btn-secondary btn-xs"
+                    onClick={() => handleSingleTrigger(source)}
+                    disabled={triggering || !!activeScraper}
+                    style={{ fontSize: '11px', padding: '4px 10px', background: 'rgba(255,255,255,0.08)' }}
+                  >
+                    {activeScraper === source ? 'Scraping Live...' : `Scrape Live ${SOURCE_LABELS[source]}`}
+                  </button>
+                )}
               </div>
             </div>
           );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Download } from 'lucide-react';
 
 export default function Explorer() {
   const [data, setData] = useState<any>(null);
@@ -25,6 +25,14 @@ export default function Explorer() {
     e.preventDefault();
     setPage(1);
     fetchData();
+  };
+
+  const handleDownloadCsv = () => {
+    const params: Record<string, string> = {};
+    if (query) params.q = query;
+    if (source !== 'all') params.source = source;
+    if (sentiment !== 'all') params.sentiment = sentiment;
+    window.open(api.dashboard.exportDocumentsUrl(params), '_blank');
   };
 
   return (
@@ -58,6 +66,9 @@ export default function Explorer() {
           <option value="mixed">Mixed</option>
         </select>
         <button type="submit" className="btn btn-primary">Search</button>
+        <button type="button" className="btn btn-secondary" onClick={handleDownloadCsv} title="Download current filtered documents as CSV">
+          <Download size={14} /> Download CSV
+        </button>
       </form>
 
       {loading ? (

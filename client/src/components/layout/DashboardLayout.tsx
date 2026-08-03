@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Layers, Lightbulb, Globe, Search,
-  TrendingUp, Users, MessageSquare, Activity, Sparkles
+  TrendingUp, Users, MessageSquare, Activity, Sparkles, FileText
 } from 'lucide-react'
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
     { to: '/themes', icon: Layers, label: 'Themes', badge: '9' },
     { to: '/insights', icon: Lightbulb, label: 'Insights' },
     { to: '/sources', icon: Globe, label: 'Sources' },
+    { to: '/reports', icon: FileText, label: 'Reports & Export' },
   ]},
   { label: 'Explore', items: [
     { to: '/explorer', icon: Search, label: 'Explorer' },
@@ -33,6 +34,7 @@ export function DashboardLayout() {
       '/themes': { title: 'Theme Explorer', subtitle: 'Discover patterns in user feedback' },
       '/insights': { title: 'Insights', subtitle: 'AI-generated strategic recommendations' },
       '/sources': { title: 'Source Analysis', subtitle: 'Per-platform feedback breakdown' },
+      '/reports': { title: 'Reports & Data Hub', subtitle: 'Export collected feedback data and AI insights in CSV & JSON' },
       '/explorer': { title: 'Document Explorer', subtitle: 'Search and analyze raw feedback' },
       '/trends': { title: 'Trend Analysis', subtitle: 'Track evolving themes over time' },
       '/segments': { title: 'User Segments', subtitle: 'Behavioral segment analysis' },

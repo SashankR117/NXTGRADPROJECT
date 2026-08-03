@@ -26,6 +26,12 @@ export const api = {
     trends: () => fetchJSON('/dashboard/trends'),
     segments: () => fetchJSON('/dashboard/segments'),
     aspects: () => fetchJSON('/dashboard/aspects'),
+    exportInsightsUrl: () => `${API_BASE}/dashboard/export/insights`,
+    exportDocumentsUrl: (params?: Record<string, string>) => {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+      return `${API_BASE}/dashboard/export/documents${qs}`;
+    },
+    exportFullReport: () => fetchJSON('/dashboard/export/full-report'),
   },
   chat: {
     send: (message: string, sessionId?: string) =>

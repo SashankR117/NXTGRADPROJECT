@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Filter, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, MessageSquare, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Insights() {
@@ -18,6 +18,10 @@ export default function Insights() {
     api.dashboard.insights(params).then(setData).finally(() => setLoading(false));
   }, [questionFilter, actionFilter]);
 
+  const handleDownloadCsv = () => {
+    window.open(api.dashboard.exportInsightsUrl(), '_blank');
+  };
+
   const toggleExpand = (id: string) => {
     setExpanded(prev => {
       const next = new Set(prev);
@@ -31,7 +35,7 @@ export default function Insights() {
 
   return (
     <div className="animate-fade-in">
-      {/* Filters */}
+      {/* Filters & Export */}
       <div className="filter-bar">
         <Filter size={16} style={{ color: 'var(--text-muted)' }} />
         <select
@@ -56,9 +60,12 @@ export default function Insights() {
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
-        <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+        <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginLeft: 'auto', marginRight: 'var(--space-sm)' }}>
           {data.insights.length} insights found
         </span>
+        <button className="btn btn-secondary btn-sm" onClick={handleDownloadCsv} title="Download insights as CSV">
+          <Download size={14} /> Download CSV
+        </button>
       </div>
 
       {/* Insights Feed */}

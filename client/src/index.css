@@ -313,6 +313,79 @@ a:hover { color: var(--accent-indigo); }
   gap: var(--space-md);
 }
 
+.github-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.github-header-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: var(--accent-indigo-light);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.github-header-btn svg {
+  color: #f1f5f9;
+  transition: transform var(--transition-fast);
+}
+
+.github-header-btn:hover svg {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+/* ─── Sidebar Footer ────────────────────────────────────────── */
+.sidebar-footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border-primary);
+}
+
+.github-sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--accent-indigo-glow);
+  border: 1px solid var(--border-accent);
+  color: var(--accent-indigo-light);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.github-sidebar-btn:hover {
+  background: var(--gradient-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.github-sidebar-btn .github-external-icon {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.github-sidebar-btn:hover .github-external-icon {
+  opacity: 1;
+}
+
 /* ─── Cards ─────────────────────────────────────────────────── */
 .card {
   background: var(--bg-card);

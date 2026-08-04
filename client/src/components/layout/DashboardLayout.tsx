@@ -1,7 +1,8 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Layers, Lightbulb, Globe, Search,
-  TrendingUp, Users, MessageSquare, Activity, Sparkles, FileText
+  TrendingUp, Users, MessageSquare, Activity, Sparkles, FileText,
+  Github, ExternalLink
 } from 'lucide-react'
 
 const navItems = [
@@ -78,6 +79,20 @@ export function DashboardLayout() {
             </div>
           ))}
         </nav>
+
+        <div className="sidebar-footer">
+          <a
+            href="https://github.com/SashankR117/NXTGRADPROJECT"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="github-sidebar-btn"
+            title="Open GitHub Repository"
+          >
+            <Github size={18} />
+            <span>GitHub Repo</span>
+            <ExternalLink size={14} className="github-external-icon" />
+          </a>
+        </div>
       </aside>
 
       {/* Main Area */}
@@ -90,6 +105,16 @@ export function DashboardLayout() {
             </div>
           </div>
           <div className="header-right">
+            <a
+              href="https://github.com/SashankR117/NXTGRADPROJECT"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="github-header-btn"
+              title="View Source on GitHub"
+            >
+              <Github size={18} />
+              <span>GitHub</span>
+            </a>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div className="status-dot active" style={{ animation: 'pulse-glow 2s infinite' }} />
               <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>Live</span>
